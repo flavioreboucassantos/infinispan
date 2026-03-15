@@ -1,0 +1,21 @@
+{
+  "distributed-cache": {
+    "owners": "2",
+    "mode": "SYNC",
+    "statistics": true,
+    "encoding": {
+      "media-type": "application/x-protostream"
+    },
+    "locking": {
+      "isolation": "REPEATABLE_READ",
+      "striping": true
+    },
+    "transaction": {
+      "mode": "NON_DURABLE_XA",
+      "locking": "OPTIMISTIC"
+    },
+    "memory": {
+      "storage": "OFF_HEAP"
+    }
+  }
+}
