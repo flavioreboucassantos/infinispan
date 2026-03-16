@@ -19,7 +19,7 @@ public class RunnableConcurrentSum implements Runnable {
 	private void nonThreadSafeSumTask() {
 		Integer integer = cache.get(keyName);
 		integer++;
-		cache.put("valor", integer);
+		cache.put(keyName, integer);
 	}
 
 	private void runNonThreadSafeSumTask() {
@@ -46,7 +46,7 @@ public class RunnableConcurrentSum implements Runnable {
 
 			Integer integer = cache.get(keyName);
 			integer++;
-			cache.put("valor", integer);
+			cache.put(keyName, integer);
 
 			tm.commit(); // O Infinispan verifica versões aqui
 
