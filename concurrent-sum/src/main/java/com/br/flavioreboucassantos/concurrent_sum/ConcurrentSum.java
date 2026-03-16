@@ -14,8 +14,8 @@ public class ConcurrentSum {
 	/*
 	 * Change Here to Select Between runThreadSafeSumTask or runNonThreadSafeSumTask
 	 */
-	static public final boolean isThreadSafe = false;
-	
+	static public final boolean isThreadSafe = true;
+
 	/*
 	 * Configurations of Concurrent Sum
 	 */
@@ -25,7 +25,9 @@ public class ConcurrentSum {
 	static private final int numberOfAdders = 5;
 	static private final int numberOfSums = 500;
 	static private final long nsTimeBetweenSums = 1000000 * 1; // 1000000 is 1 ms & * 1000 is 1 sec
-	static AtomicInteger countAddersConcluded = new AtomicInteger(0);
+
+	static private final AtomicInteger countAddersConcluded = new AtomicInteger(0);
+	static private final AtomicInteger countRollbacks = new AtomicInteger(0);
 
 	static private final RemoteCacheManager remoteCacheManager;
 	static private final RemoteCache<String, Integer> cache;
@@ -42,7 +44,7 @@ public class ConcurrentSum {
 
 		cb.remoteCache(cacheName)
 				.transactionManagerLookup(RemoteTransactionManagerLookup.getInstance())
-				.transactionMode(TransactionMode.NON_DURABLE_XA);
+				.transactionMode(TransactionMode.NON_XA);
 
 		cb.transactionTimeout(60, TimeUnit.SECONDS);
 
@@ -61,12 +63,12 @@ public class ConcurrentSum {
 
 	static public void main(String[] args) throws InterruptedException {
 //		Cache capabilities: Transactional
-//		Transaction mode: NON_DURABLE_XA - Infinispan disables transaction recovery and enlists the cache with the Java transaction manager through the XAResource API. Disabling recovery means that you cannot recover failed transactions but do not have the performance overhead of handling in-doubt transactions.
+//		Transaction mode: NON_XA - Infinispan disables transaction recovery and enlists the cache with the Java transaction manager through the XAResource API. Disabling recovery means that you cannot recover failed transactions but do not have the performance overhead of handling in-doubt transactions.
 //		Locking mode: Optimistic - Infinispan locks keys when it invokes the commit() method. Keys are locked for shorter periods of time which reduces overall latency but makes transaction recovery less efficient.
 
 // 		Storage Type: OFF_HEAP - Off-heap storage uses less memory per entry compared with JVM heap storage and can improve performance by avoiding avoids garbage collection (GC) runs.
 //		Concurrency level: 32 - Configures the number of locks to create in the shared pool for lock striping.
-//		Lock timeout: 10 ms - Sets how many milliseconds to wait for lock acquisition.
+//		Lock timeout: 1500 ms - Sets how many milliseconds to wait for lock acquisition.
 //		Lock striping: true - Uses a shared pool of locks for all entries in the cache. Striping lowers the memory footprint for locks but can reduce concurrency. If you disable striping, a lock is created for each entry in the cache.
 
 //		Read isolation levels guarantee whether or not data in the cache has changed during a transaction.
@@ -78,26 +80,33 @@ public class ConcurrentSum {
 
 //		Cache configuration: concurrent-sum.json
 
-		cache.put("valor", 0);
+		cache.put(keyName, 0);
 
 		for (int i = 0; i < numberOfAdders; i++) {
 			Thread thread = new Thread(new RunnableConcurrentSum(cache, keyName, numberOfSums, nsTimeBetweenSums));
 			thread.start();
 		}
 
+		final long msTimeOfStart = System.currentTimeMillis();
+
 		while (!allAddersConcluded())
 			Thread.yield();
+
+		final long msTimeToFinish = System.currentTimeMillis() - msTimeOfStart;
 
 		final int valorEsperado = numberOfAdders * numberOfSums;
 		final int valorEncontrado = cache.get(keyName);
 
+		print("Tempo gasto: " + msTimeToFinish + " milliseconds");
 		print("Valor esperado: " + valorEsperado);
 		print("Valor encontrado: " + valorEncontrado);
+		print("Rollbacks realizados: " + countRollbacks.get());
 
 		remoteCacheManager.close();
 	}
 
-	static public void adderConcluded() {
+	static public void adderConcluded(final int _countRollbacks) {
+		countRollbacks.addAndGet(_countRollbacks);
 		countAddersConcluded.incrementAndGet();
 	}
 }

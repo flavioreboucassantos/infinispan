@@ -2,16 +2,17 @@
   "distributed-cache": {
     "owners": "2",
     "mode": "SYNC",
-    "statistics": true,
+    "statistics": false,
     "encoding": {
       "media-type": "application/x-protostream"
     },
     "locking": {
       "isolation": "REPEATABLE_READ",
+      "acquire-timeout": "1500ms",
       "striping": true
     },
     "transaction": {
-      "mode": "NON_DURABLE_XA",
+      "mode": "NON_XA",
       "locking": "OPTIMISTIC"
     },
     "memory": {
