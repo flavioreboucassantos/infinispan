@@ -16,29 +16,34 @@ public class RunnableConcurrentSum implements Runnable {
 	/*
 	 * Non Thread Safe Sum Task
 	 */
-	private void nonThreadSafeSumTask() {
+	private void nonThreadSafeSumTask() throws Exception {
 		Integer integer = cache.get(keyName);
 		integer++;
 		cache.put(keyName, integer);
 	}
 
 	private void runNonThreadSafeSumTask() {
-		// sum every nsTimeBetweenSums
 		int numberOfSum = 0;
-		while (numberOfSum++ < numberOfSums) {
-			nonThreadSafeSumTask();
-			final long timeNextRun = System.nanoTime() + nsTimeBetweenSums;
-//			System.out.println(numberOfSum + " >>> " + timeNextRun);
-			while (System.nanoTime() < timeNextRun)
-				Thread.yield();
+		try {
+			// sum every nsTimeBetweenSums
+			while (numberOfSum++ < numberOfSums) {
+				nonThreadSafeSumTask();
+				final long timeNextRun = System.nanoTime() + nsTimeBetweenSums;
+//				System.out.println(numberOfSum + " >>> " + timeNextRun);
+				while (System.nanoTime() < timeNextRun)
+					Thread.yield();
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		} finally {
+			ConcurrentSum.adderConcluded(0);
 		}
-		ConcurrentSum.adderConcluded(0);
 	}
 
 	/*
 	 * Thread Safe Sum Task
 	 */
-	private boolean threadSafeSumTask() {
+	private boolean threadSafeSumTask() throws Exception {		
 		final TransactionManager tm = cache.getTransactionManager();
 
 		try {
@@ -64,24 +69,29 @@ public class RunnableConcurrentSum implements Runnable {
 	}
 
 	private void runThreadSafeSumTask() {
-		// sum every nsTimeBetweenSums
 		int numberOfSum = 0;
 		int countRollbacks = 0;
-		while (numberOfSum++ < numberOfSums) {
-			/*
-			 * Locking mode: Optimistic && Read isolation level: REPEATABLE_READ Optimistic trava a key quando UMA THREAD consegue commit, mas as outras THREADS já
-			 * receberam o valor DIRTY por não haver travado antes de READ. O DIRTY força o ROLLBACK e por isso é preciso retentar threadSafeSumTask()
-			 */
-			if (!threadSafeSumTask()) {
-				numberOfSum--;
-				countRollbacks++;
+		try {
+			// sum every nsTimeBetweenSums
+			while (numberOfSum++ < numberOfSums) {
+				/*
+				 * Locking mode: Optimistic && Read isolation level: REPEATABLE_READ Optimistic trava a key quando UMA THREAD consegue commit, mas as outras THREADS já
+				 * receberam o valor DIRTY por não haver travado antes de READ. O DIRTY força o ROLLBACK e por isso é preciso retentar threadSafeSumTask()
+				 */
+				if (!threadSafeSumTask()) {
+					numberOfSum--;
+					countRollbacks++;
+				}
+				final long timeNextRun = System.nanoTime() + nsTimeBetweenSums;
+//				System.out.println(numberOfSum + " >>> " + timeNextRun);
+				while (System.nanoTime() < timeNextRun)
+					Thread.yield();
 			}
-			final long timeNextRun = System.nanoTime() + nsTimeBetweenSums;
-//			System.out.println(numberOfSum + " >>> " + timeNextRun);
-			while (System.nanoTime() < timeNextRun)
-				Thread.yield();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			ConcurrentSum.adderConcluded(countRollbacks);
 		}
-		ConcurrentSum.adderConcluded(countRollbacks);
 	}
 
 	public RunnableConcurrentSum(RemoteCache<String, Integer> cache, final String keyName, final int numberOfSums, final long nsTimeBetweenSums) {
