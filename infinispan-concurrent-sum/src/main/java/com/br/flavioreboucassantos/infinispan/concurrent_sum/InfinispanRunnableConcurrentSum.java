@@ -1,11 +1,11 @@
-package com.br.flavioreboucassantos.concurrent_sum;
+package com.br.flavioreboucassantos.infinispan.concurrent_sum;
 
 import org.infinispan.client.hotrod.RemoteCache;
 
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 
-public class RunnableConcurrentSum implements Runnable {
+public class InfinispanRunnableConcurrentSum implements Runnable {
 
 	private final int numberOfSums;
 	private final long nsTimeBetweenSums;
@@ -36,14 +36,14 @@ public class RunnableConcurrentSum implements Runnable {
 		} catch (final Exception e) {
 			e.printStackTrace();
 		} finally {
-			ConcurrentSum.adderConcluded(0);
+			InfinispanConcurrentSum.adderConcluded(0);
 		}
 	}
 
 	/*
 	 * Thread Safe Sum Task
 	 */
-	private boolean threadSafeSumTask() throws Exception {		
+	private boolean threadSafeSumTask() throws Exception {
 		final TransactionManager tm = cache.getTransactionManager();
 
 		try {
@@ -90,11 +90,11 @@ public class RunnableConcurrentSum implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			ConcurrentSum.adderConcluded(countRollbacks);
+			InfinispanConcurrentSum.adderConcluded(countRollbacks);
 		}
 	}
 
-	public RunnableConcurrentSum(RemoteCache<String, Integer> cache, final String keyName, final int numberOfSums, final long nsTimeBetweenSums) {
+	public InfinispanRunnableConcurrentSum(RemoteCache<String, Integer> cache, final String keyName, final int numberOfSums, final long nsTimeBetweenSums) {
 		this.numberOfSums = numberOfSums;
 		this.nsTimeBetweenSums = nsTimeBetweenSums;
 
@@ -104,7 +104,7 @@ public class RunnableConcurrentSum implements Runnable {
 
 	@Override
 	public void run() {
-		if (ConcurrentSum.isThreadSafe)
+		if (InfinispanConcurrentSum.isThreadSafe)
 			runThreadSafeSumTask();
 		else
 			runNonThreadSafeSumTask();

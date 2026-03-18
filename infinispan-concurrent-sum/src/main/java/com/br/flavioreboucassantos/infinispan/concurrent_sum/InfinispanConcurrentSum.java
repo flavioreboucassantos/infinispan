@@ -1,4 +1,4 @@
-package com.br.flavioreboucassantos.concurrent_sum;
+package com.br.flavioreboucassantos.infinispan.concurrent_sum;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 
-public class ConcurrentSum {
+public class InfinispanConcurrentSum {
 
 	/*
 	 * Change Here to Select Between runThreadSafeSumTask or runNonThreadSafeSumTask
@@ -83,7 +83,7 @@ public class ConcurrentSum {
 		cache.put(keyName, 0);
 
 		for (int i = 0; i < numberOfAdders; i++) {
-			Thread thread = new Thread(new RunnableConcurrentSum(cache, keyName, numberOfSums, nsTimeBetweenSums));
+			Thread thread = new Thread(new InfinispanRunnableConcurrentSum(cache, keyName, numberOfSums, nsTimeBetweenSums));
 			thread.start();
 		}
 
