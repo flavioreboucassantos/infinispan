@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.br.flavioreboucassantos.infinispan</groupId>
-	<artifactId>concurrent-sum</artifactId>
+	<artifactId>infinispan-concurrent-sum</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<name>concurrent-sum</name>
